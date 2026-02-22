@@ -1,0 +1,32 @@
+{
+  "include": ["src"],
+  "compilerOptions": {
+    "module": "ESNext",
+    "target": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["ESNext", "DOM"],
+    "types": ["node"],
+    "jsx": "preserve",
+    "allowSyntheticDefaultImports": true,
+    "verbatimModuleSyntax": true,
+    /*
+      More strict checking for errors that per-file transpilers
+      like `esbuild` would crash on.
+    */
+    "isolatedModules": true,
+    /* `noEmit`: We only use TypeScript for type checking. */
+    "noEmit": true,
+    "incremental": true,
+    /* Additional options */
+    "strict": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "useDefineForClassFields": true,
+    "sourceMap": true,
+    "esModuleInterop": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true
+  }
+}
