@@ -4,7 +4,8 @@
     "start": "vite --host --open",
     "build": "vite build",
     "preview": "vite preview --host --open",
-    "check": "tsc"
+    "check": "tsc",
+    "run_unit_tests": "npx vitest run"
   },
   "devDependencies": {
     "@babylonjs/core": "^8.52.0",

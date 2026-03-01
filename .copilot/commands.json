@@ -1,0 +1,8 @@
+[
+  {
+    "name": "/run_unit_tests",
+    "description": "Run all unit tests using Vitest in the Babylon project.",
+    "parameters": [],
+    "run": "cd Babylon; npm run run_unit_tests"
+  }
+]

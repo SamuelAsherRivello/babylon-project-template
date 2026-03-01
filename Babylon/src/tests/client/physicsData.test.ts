@@ -17,4 +17,11 @@ describe('PhysicsData', () => {
     expect(data.mass).toBe(1)
     expect(data.restitution).toBe(0.9)
   })
+
+  // Edge case: zero mass and restitution
+  it('handles zero mass and restitution', () => {
+    const data = new PhysicsData(0, 0)
+    expect(data.mass).toBe(0)
+    expect(data.restitution).toBe(0)
+  })
 })
