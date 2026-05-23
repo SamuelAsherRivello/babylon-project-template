@@ -75,6 +75,14 @@ async function main() {
   const getResolution = (
     engine: BABYLON.Engine | BABYLON.WebGPUEngine
   ) => `${engine.getRenderWidth()} x ${engine.getRenderHeight()}`
+  const toggleFullscreen = async () => {
+    if (document.fullscreenElement) {
+      await document.exitFullscreen()
+      return
+    }
+
+    await canvas.requestFullscreen()
+  }
 
   let engine: BABYLON.Engine | BABYLON.WebGPUEngine
   let scene: BABYLON.Scene
@@ -97,7 +105,7 @@ async function main() {
     ui = addUI(
       configuration,
       'WebGPU',
-      ['D = Inspector', 'O = Orbiter'],
+      ['F = Fullscreen', 'D = Inspector', 'O = Orbiter'],
       getResolution(engine)
     )
   } else {
@@ -111,7 +119,7 @@ async function main() {
     ui = addUI(
       configuration,
       'WebGL',
-      ['D = Inspector', 'O = Orbiter'],
+      ['F = Fullscreen', 'D = Inspector', 'O = Orbiter'],
       getResolution(engine)
     )
 
@@ -146,6 +154,7 @@ async function main() {
   )
 
   addInput(canvas, scene, {
+    onFullscreen: toggleFullscreen,
     onOrbiter: () => {
       orbiters.push(addOrbiter.create())
       playSound('/assets/audio/Pop01.mp3')

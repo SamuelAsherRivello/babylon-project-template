@@ -86,3 +86,4 @@ pids
 *.pid.lock
 *.seed
 lib-cov
+/.tmp-chrome-fullscreen-profile

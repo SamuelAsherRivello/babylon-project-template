@@ -3,6 +3,7 @@ import * as BABYLON from '@babylonjs/core'
 // addInput.ts - Handles mouse click input and keyboard shortcuts.
 
 type InputActions = {
+  onFullscreen?: () => Promise<void> | void
   onOrbiter?: () => void
 }
 
@@ -30,8 +31,18 @@ export function addInput(
     console.log(`Clicked at: (${x}, ${y})`)
   })
 
-  window.addEventListener('keydown', ({ key }) => {
-    if (key.toLowerCase() === 'o') {
+  window.addEventListener('keydown', async ({ key }) => {
+    const shortcut = key.toLowerCase()
+
+    if (shortcut === 'f') {
+      try {
+        await actions.onFullscreen?.()
+      } catch (error) {
+        console.error('[addInput.ts] Fullscreen toggle failed:', error)
+      }
+    }
+
+    if (shortcut === 'o') {
       actions.onOrbiter?.()
     }
   })
