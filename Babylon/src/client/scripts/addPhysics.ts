@@ -15,6 +15,7 @@ export const initPhysics = async (scene: BABYLON.Scene) => {
   const havokPlugin = new BABYLON.HavokPlugin(true, havokInstance)
 
   scene.enablePhysics(new BABYLON.Vector3(0, -9.8, 0), havokPlugin)
+  scene.getPhysicsEngine()?.setTimeStep(1 / 60)
 }
 
 export const addPhysicsImposter = (

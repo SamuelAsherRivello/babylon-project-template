@@ -4,7 +4,17 @@ import * as BABYLON from '@babylonjs/core'
 
 type InputActions = {
   onFullscreen?: () => Promise<void> | void
+  onHud?: () => void
+  onInspector?: (inspectorOpen: boolean) => void
   onOrbiter?: () => void
+  onAntialiasing?: () => void
+  onFramerate?: () => void
+  onRestart?: () => void
+  onResetDefaults?: () => void
+}
+
+type InputOptions = {
+  initialInspectorOpen?: boolean
 }
 
 function updateTextElementPosition(inspectorOpen: boolean) {
@@ -21,8 +31,11 @@ function updateTextElementPosition(inspectorOpen: boolean) {
 export function addInput(
   canvas: HTMLCanvasElement,
   scene: BABYLON.Scene,
-  actions: InputActions = {}
+  actions: InputActions = {},
+  options: InputOptions = {}
 ) {
+  let setInspectorOpen: ((inspectorOpen: boolean) => Promise<void>) | undefined
+
   canvas.addEventListener('click', (event: MouseEvent) => {
     const rect = canvas.getBoundingClientRect()
     const x = event.clientX - rect.left
@@ -42,32 +55,47 @@ export function addInput(
       }
     }
 
-    if (shortcut === 'o') {
+    if (shortcut === '1') {
+      actions.onHud?.()
+    }
+
+    if (shortcut === '3') {
+      actions.onAntialiasing?.()
+    }
+
+    if (shortcut === '4') {
+      actions.onFramerate?.()
+    }
+
+    if (shortcut === '5') {
+      actions.onResetDefaults?.()
+      await setInspectorOpen?.(false)
+    }
+
+    if (shortcut === '6') {
+      actions.onRestart?.()
+    }
+
+    if (shortcut === 'c') {
       actions.onOrbiter?.()
     }
   })
 
   if (import.meta.env.MODE === 'development') {
     let inspectorReady = false
-    let inspectorOpen = !!localStorage.getItem('inspector')
+    let inspectorOpen = options.initialInspectorOpen ?? false
 
-    window.addEventListener('keydown', async ({ key }) => {
-      if (key.toLowerCase() !== 'd') {
-        return
-      }
-
+    const updateInspectorOpen = async (nextInspectorOpen: boolean) => {
       if (!inspectorReady) {
         await import('@babylonjs/core/Debug/debugLayer')
         await import('@babylonjs/inspector')
         inspectorReady = true
       }
 
-      inspectorOpen = !inspectorOpen
+      inspectorOpen = nextInspectorOpen
       updateTextElementPosition(inspectorOpen)
 
       if (inspectorOpen) {
-        localStorage.setItem('inspector', 'true')
-
         if (scene.debugLayer && typeof scene.debugLayer.show === 'function') {
           scene.debugLayer.show()
         } else {
@@ -77,25 +105,25 @@ export function addInput(
           )
         }
       } else {
-        localStorage.removeItem('inspector')
-
         if (scene.debugLayer && typeof scene.debugLayer.hide === 'function') {
           scene.debugLayer.hide()
         }
       }
+
+      actions.onInspector?.(inspectorOpen)
+    }
+    setInspectorOpen = updateInspectorOpen
+
+    window.addEventListener('keydown', async ({ key }) => {
+      if (key !== '2') {
+        return
+      }
+
+      await updateInspectorOpen(!inspectorOpen)
     })
 
-    if (localStorage.getItem('inspector')) {
-      if (scene.debugLayer && typeof scene.debugLayer.show === 'function') {
-        scene.debugLayer.show()
-        inspectorOpen = true
-        updateTextElementPosition(true)
-      } else {
-        console.error(
-          'Babylon.js Inspector is not available or not attached ' +
-            'to the scene.'
-        )
-      }
+    if (inspectorOpen) {
+      void updateInspectorOpen(true)
     }
   }
 }

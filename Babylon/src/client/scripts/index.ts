@@ -2,11 +2,19 @@
 import * as BABYLON from '@babylonjs/core'
 import '@babylonjs/loaders/glTF'
 import '../styles/index.css'
+import { adjustLighting } from './adjustLighting'
 import { addInput } from './addInput'
 import { AddOrbiter } from './addOrbiter'
 import { addPhysicsImposter, initPhysics } from './addPhysics'
 import { addPostProcess } from './addPostProcess'
 import { addUI } from './addUI'
+import {
+  debugPreferenceDefaults,
+  getDebugInputLabels,
+  readDebugPreferences,
+  resetDebugPreferences,
+  writeDebugPreferences
+} from './debugPreferences'
 import { BabylonConfigurationModel } from './model/babylonConfigurationModel'
 import { OrbiterModel } from './model/orbiterModel'
 import { PhysicsData } from './model/physicsModel'
@@ -81,7 +89,7 @@ async function main() {
       return
     }
 
-    await canvas.requestFullscreen()
+    await document.documentElement.requestFullscreen()
   }
 
   let engine: BABYLON.Engine | BABYLON.WebGPUEngine
@@ -93,6 +101,17 @@ async function main() {
   const baseSphereDiameter = 1
   const tweens = new Tweens()
   let orbiterModel = new OrbiterModel()
+  const targetFramerates = [30, 60, 120]
+  const storage = window.localStorage
+  const debugPreferences = readDebugPreferences(storage)
+  configuration.antialias = debugPreferences.antialias
+  let targetFramerateIndex = debugPreferences.targetFramerateIndex
+  let targetFramerate = targetFramerates[targetFramerateIndex]
+  const saveDebugPreferences = () => {
+    writeDebugPreferences(storage, debugPreferences)
+    ui.setShortcuts(getDebugInputLabels(debugPreferences))
+  }
+  const debugInputLabels = getDebugInputLabels(debugPreferences)
 
   if (navigator.gpu) {
     engine = new BABYLON.WebGPUEngine(canvas, {
@@ -105,8 +124,13 @@ async function main() {
     ui = addUI(
       configuration,
       'WebGPU',
-      ['F = Fullscreen', 'D = Inspector', 'O = Orbiter'],
-      getResolution(engine)
+      debugInputLabels,
+      getResolution(engine),
+      [
+        'Left Mouse = Move Camera',
+        'F = Fullscreen',
+        'C = Create Orbiter'
+      ]
     )
   } else {
     engine = new BABYLON.Engine(
@@ -119,8 +143,13 @@ async function main() {
     ui = addUI(
       configuration,
       'WebGL',
-      ['F = Fullscreen', 'D = Inspector', 'O = Orbiter'],
-      getResolution(engine)
+      debugInputLabels,
+      getResolution(engine),
+      [
+        'Left Mouse = Move Camera',
+        'F = Fullscreen',
+        'C = Create Orbiter'
+      ]
     )
 
     const info = document.createElement('div')
@@ -143,6 +172,8 @@ async function main() {
     adjustUIForInspector()
   }
 
+  ui.setVisible(debugPreferences.hudVisible)
+  ui.setTargetFPS(targetFramerate)
   window.addEventListener('resize', handleResize)
 
   let addOrbiter = new AddOrbiterClass(
@@ -153,13 +184,10 @@ async function main() {
     orbiterModel
   )
 
-  addInput(canvas, scene, {
-    onFullscreen: toggleFullscreen,
-    onOrbiter: () => {
-      orbiters.push(addOrbiter.create())
-      playSound('/assets/audio/Pop01.mp3')
-    }
-  })
+  const createOrbiter = () => {
+    orbiters.push(addOrbiter.create())
+    playSound('/assets/audio/Pop01.mp3')
+  }
 
   const alpha = 0
   const beta = 0
@@ -184,6 +212,7 @@ async function main() {
     ),
     initPhysics(scene)
   ])
+  adjustLighting(scene)
 
   if (showLoader) {
     const loaderDiv = document.getElementById('custom-loader')
@@ -235,26 +264,109 @@ async function main() {
     )
   }
 
-  addPostProcess(scene, [camera])
+  const pipeline = addPostProcess(scene, [camera])
 
-  scene.onBeforeRenderObservable.add(() => {
-    const deltaSeconds = engine.getDeltaTime() / 1000
+  addInput(canvas, scene, {
+    onFullscreen: toggleFullscreen,
+    onHud: () => {
+      debugPreferences.hudVisible = ui.toggle()
+      saveDebugPreferences()
+    },
+    onInspector: inspectorOpen => {
+      if (debugPreferences.inspectorOpen === inspectorOpen) {
+        return
+      }
+
+      debugPreferences.inspectorOpen = inspectorOpen
+      saveDebugPreferences()
+    },
+    onOrbiter: createOrbiter,
+    onAntialiasing: () => {
+      configuration.antialias = !configuration.antialias
+      debugPreferences.antialias = configuration.antialias
+      pipeline.fxaaEnabled = configuration.antialias
+      ui.setConfig()
+      saveDebugPreferences()
+    },
+    onFramerate: () => {
+      targetFramerateIndex =
+        (targetFramerateIndex + 1) % targetFramerates.length
+      debugPreferences.targetFramerateIndex = targetFramerateIndex
+      targetFramerate = targetFramerates[targetFramerateIndex]
+      ui.setTargetFPS(targetFramerate)
+      saveDebugPreferences()
+    },
+    onRestart: () => {
+      window.location.reload()
+    },
+    onResetDefaults: () => {
+      resetDebugPreferences(storage)
+      Object.assign(debugPreferences, debugPreferenceDefaults)
+      configuration.antialias = debugPreferences.antialias
+      pipeline.fxaaEnabled = configuration.antialias
+      targetFramerateIndex = debugPreferences.targetFramerateIndex
+      targetFramerate = targetFramerates[targetFramerateIndex]
+      ui.setVisible(debugPreferences.hudVisible)
+      ui.setConfig()
+      ui.setTargetFPS(targetFramerate)
+      ui.setShortcuts(getDebugInputLabels(debugPreferences))
+      adjustUIForInspector()
+    }
+  }, {
+    initialInspectorOpen: debugPreferences.inspectorOpen
+  })
+
+  let lastOrbiterTime = performance.now()
+
+  const updateOrbiters = (deltaSeconds: number) => {
     for (let index = orbiters.length - 1; index >= 0; index -= 1) {
       if (!orbiters[index].update(deltaSeconds)) {
         orbiters.splice(index, 1)
       }
     }
-  })
+  }
+
+  scene.physicsEnabled = false
+  const physicsStepMs = 1000 / 60
+  let physicsAccumulatorMs = 0
+  let lastPhysicsTime = performance.now()
+
+  const advancePhysics = (now: number) => {
+    physicsAccumulatorMs += now - lastPhysicsTime
+    lastPhysicsTime = now
+
+    while (physicsAccumulatorMs >= physicsStepMs) {
+      scene._advancePhysicsEngineStep(physicsStepMs)
+      physicsAccumulatorMs -= physicsStepMs
+    }
+  }
 
   let lastFPSUpdateTime = 0
+  let renderedFrames = 0
+  let lastRenderTime = 0
 
   engine.runRenderLoop(() => {
-    scene.render()
-
     const now = performance.now()
+    advancePhysics(now)
+    const deltaSeconds = (now - lastOrbiterTime) / 1000
+    lastOrbiterTime = now
+    updateOrbiters(deltaSeconds)
+
+    const targetFrameMs = 1000 / targetFramerate
+
+    if (now - lastRenderTime < targetFrameMs) {
+      return
+    }
+
+    lastRenderTime = now
+    scene.render()
+    renderedFrames += 1
+
     if (now - lastFPSUpdateTime >= 1000) {
-      ui.setFPS(Math.round(engine.getFps()))
+      const elapsedSeconds = (now - lastFPSUpdateTime) / 1000
+      ui.setFPS(Math.round(renderedFrames / elapsedSeconds))
       lastFPSUpdateTime = now
+      renderedFrames = 0
     }
   })
   handleResize()

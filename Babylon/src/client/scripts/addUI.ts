@@ -10,12 +10,15 @@ function escapeHtml(value: string) {
 }
 
 function formatLine(line: string) {
-  const escapedLine = escapeHtml(line)
   const trimmedLine = line.trimStart()
 
-  return trimmedLine.startsWith('•') || trimmedLine.startsWith('*')
-    ? escapedLine
-    : `<strong>${escapedLine}</strong>`
+  if (trimmedLine.startsWith('*')) {
+    const bulletText = trimmedLine.slice(1).trimStart()
+
+    return `&bull; ${escapeHtml(bulletText)}`
+  }
+
+  return `<strong>${escapeHtml(trimmedLine)}</strong>`
 }
 
 function formatBlock(lines: string[]) {
@@ -33,9 +36,9 @@ function formatPowerPreference(
 function formatConfigText(configuration: BabylonConfigurationModel) {
   const lines = [
     'Config',
-    `    • Antialias = ${configuration.antialias}`,
-    `    • AdaptToDeviceRatio = ${configuration.adaptToDeviceRatio}`,
-    `    • PowerPreference = ${
+    `* Antialias = ${configuration.antialias}`,
+    `* AdaptToDeviceRatio = ${configuration.adaptToDeviceRatio}`,
+    `* PowerPreference = ${
       formatPowerPreference(configuration.powerPreference)
     }`
   ]
@@ -46,29 +49,45 @@ function formatConfigText(configuration: BabylonConfigurationModel) {
 function formatRenderingText(
   renderingType: 'WebGPU' | 'WebGL',
   resolution?: string,
-  fps?: number
+  fps?: number,
+  targetFPS?: number
 ) {
-  const lines = ['Rendering', `    • Type = ${renderingType}`]
+  const lines = ['Rendering', `* Type = ${renderingType}`]
 
   if (resolution) {
-    lines.push(`• Resolution = ${resolution}`)
+    lines.push(`* Resolution = ${resolution}`)
   }
 
-  if (typeof fps === 'number') {
-    lines.push(`• FPS = ${fps}`)
+  if (typeof fps === 'number' && typeof targetFPS === 'number') {
+    lines.push(`* FPS = ${fps}/${targetFPS}`)
+  } else if (typeof fps === 'number') {
+    lines.push(`* FPS = ${fps}`)
   }
 
   return formatBlock(lines)
+}
+
+function appendOverlayPanel(cornerUI: HTMLDivElement, lines: string[]) {
+  const panel = new TextElement('', '70px')
+  panel.setHTML(formatBlock(lines))
+  panel.element.style.position = 'static'
+  panel.element.style.margin = '0'
+  cornerUI.appendChild(panel.element)
+
+  return panel
 }
 
 export function addUI(
   configuration: BabylonConfigurationModel,
   renderingType: 'WebGPU' | 'WebGL',
   shortcuts?: string[],
-  resolution?: string
+  resolution?: string,
+  runtimeInputs?: string[]
 ) {
   let currentResolution = resolution
   let currentFPS = 0
+  let currentTargetFPS = 60
+  let isVisible = true
   let cornerUI = document.getElementById('CornerUI') as
     | HTMLDivElement
     | null
@@ -95,39 +114,91 @@ export function addUI(
 
   const renderElem = new TextElement('', '10px')
   renderElem.setHTML(
-    formatRenderingText(renderingType, currentResolution, currentFPS)
+    formatRenderingText(
+      renderingType,
+      currentResolution,
+      currentFPS,
+      currentTargetFPS
+    )
   )
   renderElem.element.style.position = 'static'
   renderElem.element.style.margin = '0'
   cornerUI.appendChild(renderElem.element)
 
-  let shortcutsElem
-  if (shortcuts) {
-    const shortcutLines = [
-      'Shortcuts',
-      ...shortcuts.map(shortcut => `    • ${shortcut}`)
-    ]
-    shortcutsElem = new TextElement('', '70px')
-    shortcutsElem.setHTML(formatBlock(shortcutLines))
-    shortcutsElem.element.style.position = 'static'
-    shortcutsElem.element.style.margin = '0'
-    cornerUI.appendChild(shortcutsElem.element)
-  }
+  const shortcutsElem = shortcuts
+    ? appendOverlayPanel(
+      cornerUI,
+      ['Debug Input', ...shortcuts.map(shortcut => `* ${shortcut}`)]
+    )
+    : undefined
+
+  const runtimeInputsElem = runtimeInputs
+    ? appendOverlayPanel(
+      cornerUI,
+      [
+        'Runtime Input',
+        ...runtimeInputs.map(runtimeInput => `* ${runtimeInput}`)
+      ]
+    )
+    : undefined
 
   return {
     configElem,
     renderElem,
     shortcutsElem,
+    runtimeInputsElem,
+    toggle: () => {
+      isVisible = !isVisible
+      cornerUI.style.display = isVisible ? 'flex' : 'none'
+
+      return isVisible
+    },
+    setVisible: (nextVisible: boolean) => {
+      isVisible = nextVisible
+      cornerUI.style.display = isVisible ? 'flex' : 'none'
+    },
+    setShortcuts: (nextShortcuts: string[]) => {
+      shortcutsElem?.setHTML(
+        formatBlock([
+          'Debug Input',
+          ...nextShortcuts.map(shortcut => `* ${shortcut}`)
+        ])
+      )
+    },
+    setConfig: () => {
+      configElem.setHTML(formatConfigText(configuration))
+    },
     setResolution: (nextResolution: string) => {
       currentResolution = nextResolution
       renderElem.setHTML(
-        formatRenderingText(renderingType, currentResolution, currentFPS)
+        formatRenderingText(
+          renderingType,
+          currentResolution,
+          currentFPS,
+          currentTargetFPS
+        )
       )
     },
     setFPS: (fps: number) => {
       currentFPS = fps
       renderElem.setHTML(
-        formatRenderingText(renderingType, currentResolution, currentFPS)
+        formatRenderingText(
+          renderingType,
+          currentResolution,
+          currentFPS,
+          currentTargetFPS
+        )
+      )
+    },
+    setTargetFPS: (targetFPS: number) => {
+      currentTargetFPS = targetFPS
+      renderElem.setHTML(
+        formatRenderingText(
+          renderingType,
+          currentResolution,
+          currentFPS,
+          currentTargetFPS
+        )
       )
     }
   }

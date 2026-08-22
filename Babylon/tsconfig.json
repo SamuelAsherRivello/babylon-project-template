@@ -5,6 +5,7 @@
     "target": "ESNext",
     "moduleResolution": "Bundler",
     "lib": ["ESNext", "DOM"],
+    "types": ["node"],
     "jsx": "preserve",
     "allowSyntheticDefaultImports": true,
     "verbatimModuleSyntax": true,

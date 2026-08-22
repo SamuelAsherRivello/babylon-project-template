@@ -30,4 +30,6 @@ export const addPostProcess = (scene: Scene, cameras: Camera[]) => {
   pipeline.depthOfField.focusDistance = 2000
   pipeline.depthOfField.focalLength = 40
   pipeline.depthOfField.fStop = 1.4
+
+  return pipeline
 }
