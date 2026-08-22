@@ -4,7 +4,7 @@ import { viteStaticCopy } from 'vite-plugin-static-copy'
 
 const havokWasmPath = normalizePath(
   path.resolve(
-    __dirname,
+    import.meta.dirname,
     './node_modules/@babylonjs/havok/lib/esm/HavokPhysics.wasm'
   )
 )
@@ -15,7 +15,9 @@ export default defineConfig({
       targets: [
         {
           src: havokWasmPath,
-          dest: normalizePath(path.resolve(__dirname, './public'))
+          dest: normalizePath(
+            path.resolve(import.meta.dirname, './public')
+          )
         }
       ]
     })

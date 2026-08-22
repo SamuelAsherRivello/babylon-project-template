@@ -3,7 +3,7 @@
   "compilerOptions": {
     "module": "ESNext",
     "target": "ESNext",
-    "moduleResolution": "Node",
+    "moduleResolution": "Bundler",
     "lib": ["ESNext", "DOM"],
     "jsx": "preserve",
     "allowSyntheticDefaultImports": true,
@@ -26,18 +26,6 @@
     "esModuleInterop": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noImplicitReturns": true,
-
-    /*
-      You can't currently define paths in your `extends` config,
-      so we have to set `baseUrl` and `paths` here.
-      Don't change these unless you know what you're doing.
-      See:
-      https://github.com/microsoft/TypeScript/issues/25430
-    */
-    "baseUrl": "./",
-    "paths": {
-      "*": ["web_modules/.types/*"]
-    }
+    "noImplicitReturns": true
   }
 }

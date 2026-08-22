@@ -87,3 +87,4 @@ pids
 *.seed
 lib-cov
 /.tmp-chrome-fullscreen-profile
+/output
