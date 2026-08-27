@@ -16,7 +16,7 @@ It includes physics, post-processing, tests, and a modular structure.
 
 ## Live Demo
 
-https://samuelasherrivello.github.io/babylon-project-template/latest/
+https://samuelasherrivello.github.io/babylon-walking-mobile/latest/
 
 The browser build is exported and hosted when a GitHub Release is
 published. Versioned releases live under `/releases/<version>/`, and

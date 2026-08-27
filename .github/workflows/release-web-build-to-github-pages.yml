@@ -149,7 +149,7 @@ jobs:
               <meta charset="utf-8">
               <meta http-equiv="refresh"
                 content="0; url=../releases/${RELEASE_VERSION}/">
-              <title>Babylon Project Template</title>
+              <title>Babylon Walking Mobile</title>
             </head>
             <body>
               <a href="../releases/${RELEASE_VERSION}/">
@@ -164,7 +164,7 @@ jobs:
             <head>
               <meta charset="utf-8">
               <meta http-equiv="refresh" content="0; url=./latest/">
-              <title>Babylon Project Template</title>
+              <title>Babylon Walking Mobile</title>
             </head>
             <body>
               <a href="./latest/">Open the latest release</a>

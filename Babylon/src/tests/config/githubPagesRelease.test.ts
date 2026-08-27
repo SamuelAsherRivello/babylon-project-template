@@ -62,7 +62,7 @@ describe('GitHub Pages release publishing', () => {
     expect(readme).toContain('## Live Demo')
     expect(readme).toContain(
       'https://samuelasherrivello.github.io/' +
-        'babylon-project-template/latest/'
+        'babylon-walking-mobile/latest/'
     )
     expect(readme).toContain('/releases/<version>/')
   })

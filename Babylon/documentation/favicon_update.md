@@ -1,4 +1,4 @@
-# Babylon Project Template
+# Babylon Walking Mobile
 
 This project uses the Babylon.js favicon for its page icon.
 
