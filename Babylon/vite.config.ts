@@ -10,6 +10,7 @@ const havokWasmPath = normalizePath(
 )
 
 export default defineConfig({
+  base: './',
   plugins: [
     viteStaticCopy({
       targets: [

@@ -8,7 +8,7 @@ const physicsData = new PhysicsData()
 export const initPhysics = async (scene: BABYLON.Scene) => {
   const url = import.meta.env.DEV
     ? 'node_modules/@babylonjs/havok/lib/esm/HavokPhysics.wasm'
-    : 'HavokPhysics.wasm'
+    : `${import.meta.env.BASE_URL}HavokPhysics.wasm`
   const response = await fetch(url)
   const wasmBinary = await response.arrayBuffer()
   const havokInstance = await HavokPhysics({ wasmBinary })

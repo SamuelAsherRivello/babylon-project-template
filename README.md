@@ -14,13 +14,23 @@ It includes physics, post-processing, tests, and a modular structure.
   </figcaption>
 </figure>
 
+## Live Demo
+
+https://samuelasherrivello.github.io/babylon-project-template/latest/
+
+The browser build is exported and hosted when a GitHub Release is
+published. Versioned releases live under `/releases/<version>/`, and
+`/latest/` points to the newest published release.
+
 ## Table of Contents
 
-1. [Getting Started](#getting-started)
-2. [Project Overview](#project-overview)
-3. [Project Details](#project-details)
-4. [Resources](#resources)
-5. [Credits](#credits)
+1. [Live Demo](#live-demo)
+2. [Getting Started](#getting-started)
+3. [Release Deployment](#release-deployment)
+4. [Project Overview](#project-overview)
+5. [Project Details](#project-details)
+6. [Resources](#resources)
+7. [Credits](#credits)
 
 ## Getting Started
 
@@ -30,14 +40,42 @@ It includes physics, post-processing, tests, and a modular structure.
 2. Open the `Babylon` folder in a command line.
 3. Run `npm install` to download and install dependencies.
 4. Run `npm run build` to build the project.
-5. Run `npm run dev` to launch a local development server.
+5. Run `npm start` to launch a local development server.
 
 ### More Commands
 
 - `npm install`: Download and install dependencies.
 - `npm run build`: Build the app.
-- `npm run dev`: Run the app locally with hot reload.
-- `npm run test`: Run unit tests.
+- `npm start`: Run the app locally with hot reload.
+- `npm run check`: Check TypeScript.
+- `npm run run_unit_tests`: Run unit tests.
+
+## Release Deployment
+
+GitHub Releases are the publishing boundary. Normal commits do not deploy
+the project.
+
+Before the first release, open `Settings > Pages` on GitHub and set the
+source to `GitHub Actions`. Then publish a GitHub Release whose tag looks
+like `v0.01` or `v1.2.3`.
+
+The `ReleaseWebBuildToGithubPages` workflow performs these steps:
+
+1. Checks out the released tag.
+2. Installs dependencies from `Babylon/package-lock.json`.
+3. Runs the TypeScript check and unit tests.
+4. Builds the Vite app from the `Babylon` folder.
+5. Attaches `babylon-web-build.zip` to the GitHub Release.
+6. Publishes every stored release build to GitHub Pages.
+
+| URL | Purpose |
+| --- | ------- |
+| `/latest/` | Redirects to the newest published release. |
+| `/releases/v0.01/` | Plays one immutable versioned build. |
+
+Each release asset is the source for its versioned Pages folder. When a
+new release is published, the workflow reconstructs the Pages site from
+all release assets and updates only the `/latest/` redirect.
 
 ## Project Overview
 
@@ -58,6 +96,7 @@ Use cases include prototypes, educational projects, and browser games.
 ### Structure
 
 - `Babylon`: Main project folder.
+- `.github/workflows`: Release-triggered GitHub Pages publishing.
 - `Babylon/public/assets/glb/`: GLB assets.
 - `Babylon/public/index.html`: Entry HTML page.
 - `Babylon/src/client/styles/`: CSS styling.

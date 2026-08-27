@@ -166,10 +166,13 @@ async function main() {
   })
   observer.observe(document.body, { childList: true, subtree: true })
 
-  const handleResize = () => {
-    engine.resize()
+  engine.onResizeObservable.add(() => {
     ui.setResolution(getResolution(engine))
     adjustUIForInspector()
+  })
+
+  const handleResize = () => {
+    engine.resize()
   }
 
   ui.setVisible(debugPreferences.hudVisible)
@@ -186,7 +189,9 @@ async function main() {
 
   const createOrbiter = () => {
     orbiters.push(addOrbiter.create())
-    playSound('/assets/audio/Pop01.mp3')
+    playSound(
+      `${import.meta.env.BASE_URL}assets/audio/Pop01.mp3`
+    )
   }
 
   const alpha = 0
@@ -206,7 +211,7 @@ async function main() {
 
   await Promise.all([
     BABYLON.SceneLoader.AppendAsync(
-      'assets/models/glb/',
+      `${import.meta.env.BASE_URL}assets/models/glb/`,
       'pixel_room.glb',
       scene
     ),
